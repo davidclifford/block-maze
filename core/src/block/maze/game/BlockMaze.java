@@ -6,17 +6,22 @@ import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g3d.*;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
+import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.utils.CameraInputController;
 import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Vector3;
 
 public class BlockMaze extends ApplicationAdapter {
+    static final int MAX_BLOCKS = 2048;
+
 	private PerspectiveCamera camera;
 	private ModelBatch modelBatch;
 	private Model box;
@@ -27,6 +32,9 @@ public class BlockMaze extends ApplicationAdapter {
 	private BitmapFont font;
 	private SpriteBatch spriteBatch;
     public CameraInputController camController;
+    private Texture tex;
+    private TextureRegion[][] tile;
+    private ModelInstance[] blocks = new ModelInstance[MAX_BLOCKS];
 	
 	@Override
 	public void create () {
@@ -36,6 +44,8 @@ public class BlockMaze extends ApplicationAdapter {
         config.foregroundFPS = 0; // Setting to 0 disables foreground fps throttling
         config.backgroundFPS = 0; // Setting to 0 disables background fps throttling
 
+        tex = new Texture("terrain.png");
+        tile = TextureRegion.split(tex, 16, 16);
         font = new BitmapFont();
         spriteBatch = new SpriteBatch();
 		camera = new PerspectiveCamera(
@@ -47,7 +57,7 @@ public class BlockMaze extends ApplicationAdapter {
 		camera.position.set(0f,0f,10f);
 		camera.lookAt(0f,0f,0f);
 
-		// Near and Far (plane) repesent the minimum and maximum ranges of the camera in, um, units
+		// Near and Far (plane) represents the minimum and maximum ranges of the camera in, um, units
 		camera.near = 0.1f;
 		camera.far = 300.0f;
 
@@ -61,9 +71,12 @@ public class BlockMaze extends ApplicationAdapter {
 		// A model holds all of the information about an, um, model, such as vertex data and texture info
 		// However, you need an instance to actually render it.  The instance contains all the
 		// positioning information ( and more ).  Remember Model==heavy ModelInstance==Light
-        boxInstance = new ModelInstance(box,0,0,0);
-        boxInstance1 = new ModelInstance(box,4,0,0);
-        boxInstance2 = new ModelInstance(box,-4,0,0);
+        for (int i=0; i<MAX_BLOCKS; i++) {
+            int x = (int)(Math.random() * 64f)*4-128;
+            int y = (int)(Math.random() * 64f)*4-128;
+            int z = (int)(Math.random() * 64f)*4-128;
+            blocks[i] = new ModelInstance(box,x, y, z);
+        }
 
 		// Finally we want some light, or we wont see our color.  The environment gets passed in during
 		// the rendering process.  Create one, then create an Ambient ( non-positioned, non-directional ) light.
@@ -83,16 +96,14 @@ public class BlockMaze extends ApplicationAdapter {
         camController.update();
 		camera.update();
 
-		//Rotate the box
-		boxInstance.transform.rotate(Vector3.X,1f);
-        boxInstance1.transform.rotate(Vector3.Z,1f);
-        boxInstance2.transform.rotate(Vector3.Y,1f);
-
 		// Like spriteBatch, just with models!  pass in the box Instances and the environment
 		modelBatch.begin(camera);
-        modelBatch.render(boxInstance, environment);
-        modelBatch.render(boxInstance1, environment);
-        modelBatch.render(boxInstance2, environment);
+		for (int i=0; i<MAX_BLOCKS; i++) {
+            blocks[i].transform.rotate(Vector3.X,i%3-1);
+            blocks[i].transform.rotate(Vector3.Z,(i/3)%3-1);
+            blocks[i].transform.rotate(Vector3.Y,(i/9)%3-1);
+            modelBatch.render(blocks[i], environment);
+        }
 		modelBatch.end();
 
         spriteBatch.begin();
@@ -114,25 +125,31 @@ public class BlockMaze extends ApplicationAdapter {
 		// We pass in a ColorAttribute, making our cubes diffuse ( aka, color ) red.
 		// And let openGL know we are interested in the Position and Normal channels
 //
-        Material mat = new Material();
+        Material mat = new Material(TextureAttribute.createDiffuse(tex));
         modelBuilder.begin();
-        MeshPartBuilder mp = modelBuilder.part("back", GL20.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked, mat);
+        MeshPartBuilder mp = modelBuilder.part("back", GL20.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked | Usage.TextureCoordinates, mat);
             mp.setColor(Color.RED);
+            mp.setUVRange(tile[1][1]);
             mp.rect(-2f,-2f,-2f, -2f,2f,-2f,  2f,2f,-2f, 2f,-2f,-2f, 0,0,-1);
-        mp = modelBuilder.part("front", GL20.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked, mat);
+        mp = modelBuilder.part("front", GL20.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked | Usage.TextureCoordinates, mat);
             mp.setColor(Color.GREEN);
+            mp.setUVRange(tile[0][1]);
             mp.rect(-2f,-2f,2f, 2f,-2f,2f,  2f,2f,2f, -2f,2f,2f, 0,0,1);
-        mp = modelBuilder.part("left", GL20.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked, mat);
+        mp = modelBuilder.part("left", GL20.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked | Usage.TextureCoordinates, mat);
             mp.setColor(Color.BLUE);
+            mp.setUVRange(tile[0][1]);
             mp.rect(-2f,-2f,-2f, -2f,-2f,2f,  -2f,2f,2f, -2f,2f,-2f, -1,0,0);
-        mp = modelBuilder.part("right", GL20.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked, mat);
+        mp = modelBuilder.part("right", GL20.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked | Usage.TextureCoordinates, mat);
             mp.setColor(Color.YELLOW);
+            mp.setUVRange(tile[0][12]);
             mp.rect(2f,-2f,2f, 2f,-2f,-2f,  2f,2f,-2f, 2f,2f,2f, 1,0,0);
-        mp = modelBuilder.part("top", GL20.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked, mat);
-            mp.setColor(Color.BLACK);
+        mp = modelBuilder.part("top", GL20.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked | Usage.TextureCoordinates, mat);
+            mp.setColor(Color.WHITE);
+            mp.setUVRange(tile[0][2]);
             mp.rect(-2f,2f,2f, 2f,2f,2f,  2f,2f,-2f, -2f,2f,-2f, 0,1,0);
-        mp = modelBuilder.part("top", GL20.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked, mat);
+        mp = modelBuilder.part("top", GL20.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked | Usage.TextureCoordinates, mat);
             mp.setColor(Color.PURPLE);
+            mp.setUVRange(tile[1][0]);
             mp.rect(-2f,-2f,-2f, 2f,-2f,-2f,  2f,-2f,2f, -2f,-2f,2f, 0,-1,0);
         box = modelBuilder.end();
 
