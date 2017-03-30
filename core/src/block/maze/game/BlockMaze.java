@@ -11,7 +11,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g3d.*;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
-import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
+import com.badlogic.gdx.graphics.g3d.utils.CameraInputController;
 import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Vector3;
@@ -26,6 +26,7 @@ public class BlockMaze extends ApplicationAdapter {
 	private Environment environment;
 	private BitmapFont font;
 	private SpriteBatch spriteBatch;
+    public CameraInputController camController;
 	
 	@Override
 	public void create () {
@@ -49,6 +50,9 @@ public class BlockMaze extends ApplicationAdapter {
 		// Near and Far (plane) repesent the minimum and maximum ranges of the camera in, um, units
 		camera.near = 0.1f;
 		camera.far = 300.0f;
+
+        camController = new CameraInputController(camera);
+        Gdx.input.setInputProcessor(camController);
 
 		// A ModelBatch is like a SpriteBatch, just for models.  Use it to batch up geometry for OpenGL
 		modelBatch = new ModelBatch();
@@ -74,21 +78,17 @@ public class BlockMaze extends ApplicationAdapter {
 		Gdx.gl.glClearColor(0, 0.7f, 0.7f, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 
-		// For some flavor, lets spin our camera around the Y axis by 1 degree each time render is called
-//		camera.rotate(Vector3.Y,3f);
-//		camera.translate(new Vector3(0,0,0.01f));
 		// When you change the camera details, you need to call update();
 		// Also note, you need to call update() at least once.
+        camController.update();
 		camera.update();
-		//boxInstance.transform.trn(0,0,0.1f);
 
 		//Rotate the box
 		boxInstance.transform.rotate(Vector3.X,1f);
         boxInstance1.transform.rotate(Vector3.Z,1f);
         boxInstance2.transform.rotate(Vector3.Y,1f);
-		//boxInstance.calculateTransforms();
 
-		// Like spriteBatch, just with models!  pass in the box Instance and the environment
+		// Like spriteBatch, just with models!  pass in the box Instances and the environment
 		modelBatch.begin(camera);
         modelBatch.render(boxInstance, environment);
         modelBatch.render(boxInstance1, environment);
