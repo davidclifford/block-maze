@@ -23,7 +23,7 @@ import com.badlogic.gdx.math.Vector3;
 import static com.badlogic.gdx.graphics.GL30.*;
 
 public class BlockMaze extends ApplicationAdapter {
-    static final int MAX_BLOCKS = 48;
+    static final int MAX_BLOCKS = 2048;
 
 	private PerspectiveCamera camera;
 	private ModelBatch modelBatch;
@@ -55,7 +55,7 @@ public class BlockMaze extends ApplicationAdapter {
         font = new BitmapFont();
         spriteBatch = new SpriteBatch();
 		camera = new PerspectiveCamera(
-				60,
+				67,
 				Gdx.graphics.getWidth(),
 				Gdx.graphics.getHeight());
 
@@ -73,7 +73,7 @@ public class BlockMaze extends ApplicationAdapter {
 		// A ModelBatch is like a SpriteBatch, just for models.  Use it to batch up geometry for OpenGL
 		modelBatch = new ModelBatch();
 
-        mat = new Material(TextureAttribute.createDiffuse(tex));
+        mat = new Material();//TextureAttribute.createDiffuse(tex));
 //        mat.set(IntAttribute.createCullFace(GL_NONE));
 
 		// A model holds all of the information about an, um, model, such as vertex data and texture info
@@ -136,31 +136,33 @@ public class BlockMaze extends ApplicationAdapter {
 		// We pass in a ColorAttribute, making our cubes diffuse ( aka, color ) red.
 		// And let openGL know we are interested in the Position and Normal channels
 
-        Color color = new Color((x+128)/256f,(y+128)/256f,(z+128)/256f,1f);
+        Color color1 = new Color((x+128)/256f,(y+128)/256f,(z+128)/256f,1f);
+        Color color2 = new Color((x+128+8)/256f,(y+128+8)/256f,(z+128+8)/256f,1f);
+        Color color3 = new Color((x+128-8)/256f,(y+128-8)/256f,(z+128-8)/256f,1f);
         modelBuilder.begin();
         MeshPartBuilder mp;
         mp = modelBuilder.part("back", GL30.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked | Usage.TextureCoordinates, mat);
-            mp.setColor(color);
+            mp.setColor(color1);
             mp.setUVRange(tile[1][1]);
             mp.rect(-2f,-2f,-2f, -2f,2f,-2f,  2f,2f,-2f, 2f,-2f,-2f, 0,0,-1);
         mp = modelBuilder.part("front", GL30.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked | Usage.TextureCoordinates, mat);
-        mp.setColor(color);
+        mp.setColor(color1);
             mp.setUVRange(tile[0][1]);
             mp.rect(-2f,-2f,2f, 2f,-2f,2f,  2f,2f,2f, -2f,2f,2f, 0,0,1);
         mp = modelBuilder.part("left", GL30.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked | Usage.TextureCoordinates, mat);
-        mp.setColor(color);
+        mp.setColor(color2);
             mp.setUVRange(tile[0][3]);
             mp.rect(-2f,-2f,-2f, -2f,-2f,2f,  -2f,2f,2f, -2f,2f,-2f, -1,0,0);
         mp = modelBuilder.part("right", GL30.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked | Usage.TextureCoordinates, mat);
-        mp.setColor(color);
+        mp.setColor(color2);
             mp.setUVRange(tile[0][12]);
             mp.rect(2f,-2f,2f, 2f,-2f,-2f,  2f,2f,-2f, 2f,2f,2f, 1,0,0);
         mp = modelBuilder.part("top", GL30.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked | Usage.TextureCoordinates, mat);
-        mp.setColor(color);
+        mp.setColor(color3);
             mp.setUVRange(tile[0][2]);
             mp.rect(-2f,2f,2f, 2f,2f,2f,  2f,2f,-2f, -2f,2f,-2f, 0,1,0);
         mp = modelBuilder.part("top", GL30.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked | Usage.TextureCoordinates, mat);
-        mp.setColor(color);
+        mp.setColor(color3);
             mp.setUVRange(tile[1][0]);
             mp.rect(-2f,-2f,-2f, 2f,-2f,-2f,  2f,-2f,2f, -2f,-2f,2f, 0,-1,0);
         box = modelBuilder.end();
