@@ -2,8 +2,8 @@ package block.maze.game;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
-import com.badlogic.gdx.backends.lwjgl.LwjglGraphics;
+//import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
+//import com.badlogic.gdx.backends.lwjgl.LwjglGraphics;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL30;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
@@ -35,16 +35,17 @@ public class BlockMaze extends ApplicationAdapter {
     private Texture tex;
     private TextureRegion[][] tile;
     private ModelInstance[] blocks = new ModelInstance[MAX_BLOCKS];
+    private ModelInstance chunks;
     private Material mat;
 	
 	@Override
 	public void create () {
 
-        LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
-        config.vSyncEnabled = false; // Setting to false disables vertical sync
-        config.foregroundFPS = 0; // Setting to 0 disables foreground fps throttling
-        config.backgroundFPS = 0; // Setting to 0 disables background fps throttling
-        config.useGL30 = true;
+//        LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
+//        config.vSyncEnabled = false; // Setting to false disables vertical sync
+//        config.foregroundFPS = 0; // Setting to 0 disables foreground fps throttling
+//        config.backgroundFPS = 0; // Setting to 0 disables background fps throttling
+//        config.useGL30 = true;
 
         Gdx.app.log("KRU", "renderer: " + Gdx.gl.glGetString(GL30.GL_RENDERER));
         Gdx.app.log("KRU", "vendor: " + Gdx.gl.glGetString(GL30.GL_VENDOR));
@@ -74,7 +75,7 @@ public class BlockMaze extends ApplicationAdapter {
 		modelBatch = new ModelBatch();
 
         mat = new Material();//TextureAttribute.createDiffuse(tex));
-//        mat.set(IntAttribute.createCullFace(GL_NONE));
+        mat.set(IntAttribute.createCullFace(GL_NONE));
 
 		// A model holds all of the information about an, um, model, such as vertex data and texture info
 		// However, you need an instance to actually render it.  The instance contains all the
@@ -87,10 +88,15 @@ public class BlockMaze extends ApplicationAdapter {
             blocks[i] = new ModelInstance(box,x, y, z);
         }
 
+        Model chunk = makeRandomBoxes();
+        chunks = new ModelInstance(chunk);
+
 		// Finally we want some light, or we wont see our color.  The environment gets passed in during
 		// the rendering process.  Create one, then create an Ambient ( non-positioned, non-directional ) light.
 		environment = new Environment();
 		environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.8f, 0.8f, 0.8f, 1.0f));
+
+
     }
 
 	@Override
@@ -100,6 +106,9 @@ public class BlockMaze extends ApplicationAdapter {
 		Gdx.gl.glClearColor(0, 0.7f, 0.7f, 1);
 		Gdx.gl.glClear(GL30.GL_COLOR_BUFFER_BIT | GL30.GL_DEPTH_BUFFER_BIT);
 
+		float delta = Gdx.graphics.getDeltaTime();
+		float speed = delta * 100.0f;
+
 		// When you change the camera details, you need to call update();
 		// Also note, you need to call update() at least once.
         camController.update();
@@ -107,16 +116,19 @@ public class BlockMaze extends ApplicationAdapter {
 
 		// Like spriteBatch, just with models!  pass in the box Instances and the environment
 		modelBatch.begin(camera);
-		for (int i=0; i<MAX_BLOCKS; i++) {
-            blocks[i].transform.rotate(Vector3.X,(i%3-1)*1f);
-            blocks[i].transform.rotate(Vector3.Z,((i/3)%3-1)*1f);
-            blocks[i].transform.rotate(Vector3.Y,((i/9)%3-1)*1f);
-            modelBatch.render(blocks[i], environment);
-        }
+//		for (int i=0; i<MAX_BLOCKS; i++) {
+//            blocks[i].transform.rotate(Vector3.X,(i%3-1)*speed);
+//            blocks[i].transform.rotate(Vector3.Z,((i/3)%3-1)*speed);
+//            blocks[i].transform.rotate(Vector3.Y,((i/9)%3-1)*speed);
+//            modelBatch.render(blocks[i], environment);
+//        }
+        chunks.transform.rotate(Vector3.Y,speed*0.1f);
+        modelBatch.render(chunks,environment);
 		modelBatch.end();
 
         spriteBatch.begin();
-        font.draw(spriteBatch, "fps: " + Gdx.graphics.getFramesPerSecond(), 0, 20);
+        font.draw(spriteBatch, "delta: " + Gdx.graphics.getDeltaTime()*100f, 0, 20);
+        font.draw(spriteBatch, "fps: " + Gdx.graphics.getFramesPerSecond(), 0, 40);
         spriteBatch.end();
 	}
 
@@ -126,6 +138,52 @@ public class BlockMaze extends ApplicationAdapter {
 		spriteBatch.dispose();
 
 	}
+
+	private Model makeRandomBoxes() {
+	    Model chunk;
+        ModelBuilder modelBuilder = new ModelBuilder();
+        MeshPartBuilder mp;
+
+        modelBuilder.begin();
+        for(int i=0; i<2560;i++) {
+
+            int x = (int)(Math.random() * 64f)*4-128;
+            int y = (int)(Math.random() * 64f)*4-128;
+            int z = (int)(Math.random() * 64f)*4-128;
+
+            Color color1 = new Color((x+128)/256f,(y+128)/256f,(z+128)/256f,1f);
+            Color color2 = new Color((x+128+8)/256f,(y+128+8)/256f,(z+128+8)/256f,1f);
+            Color color3 = new Color((x+128-8)/256f,(y+128-8)/256f,(z+128-8)/256f,1f);
+
+
+            mp = modelBuilder.part("back", GL30.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked | Usage.TextureCoordinates, mat);
+            mp.setColor(color1);
+            mp.setUVRange(tile[1][1]);
+            mp.rect(x-2f, y-2f, z-2f, x-2f, y+2f, z-2f, x+2f, y+2f, z-2f, x+2f, y-2f, z-2f, 0, 0, -1);
+            mp = modelBuilder.part("front", GL30.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked | Usage.TextureCoordinates, mat);
+            mp.setColor(color1);
+            mp.setUVRange(tile[0][1]);
+            mp.rect(x-2f, y-2f, z+2f, x+2f, y-2f, z+2f, x+2f, y+2f, z+2f, x-2f, y+2f, z+2f, 0, 0, 1);
+            mp = modelBuilder.part("left", GL30.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked | Usage.TextureCoordinates, mat);
+            mp.setColor(color2);
+            mp.setUVRange(tile[0][3]);
+            mp.rect(x-2f, y-2f, z-2f, x-2f, y-2f, z+2f, x-2f, y+2f, z+2f, x-2f, y+2f, z-2f, -1, 0, 0);
+            mp = modelBuilder.part("right", GL30.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked | Usage.TextureCoordinates, mat);
+            mp.setColor(color2);
+            mp.setUVRange(tile[0][12]);
+            mp.rect(x+2f, y-2f, z+2f, x+2f, y-2f, z-2f, x+2f, y+2f, z-2f, x+2f, y+2f, z+2f, 1, 0, 0);
+            mp = modelBuilder.part("top", GL30.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked | Usage.TextureCoordinates, mat);
+            mp.setColor(color3);
+            mp.setUVRange(tile[0][2]);
+            mp.rect(x-2f, y+2f, z+2f, x+2f, y+2f, z+2f, x+2f, y+2f, z-2f, x-2f, y+2f, z-2f, 0, 1, 0);
+            mp = modelBuilder.part("bot", GL30.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked | Usage.TextureCoordinates, mat);
+            mp.setColor(color3);
+            mp.setUVRange(tile[1][0]);
+            mp.rect(x-2f, y-2f, z-2f, x+2f, y-2f, z-2f, x+2f, y-2f, z+2f, x-2f, y-2f, z+2f, 0, -1, 0);
+        }
+        chunk = modelBuilder.end();
+        return chunk;
+    }
 
 	private Model makeBox(int x, int y, int z) {
 		Model box;
@@ -161,7 +219,7 @@ public class BlockMaze extends ApplicationAdapter {
         mp.setColor(color3);
             mp.setUVRange(tile[0][2]);
             mp.rect(-2f,2f,2f, 2f,2f,2f,  2f,2f,-2f, -2f,2f,-2f, 0,1,0);
-        mp = modelBuilder.part("top", GL30.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked | Usage.TextureCoordinates, mat);
+        mp = modelBuilder.part("bot", GL30.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked | Usage.TextureCoordinates, mat);
         mp.setColor(color3);
             mp.setUVRange(tile[1][0]);
             mp.rect(-2f,-2f,-2f, 2f,-2f,-2f,  2f,-2f,2f, -2f,-2f,2f, 0,-1,0);
