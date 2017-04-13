@@ -13,6 +13,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g3d.*;
+import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.IntAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
@@ -47,6 +48,8 @@ public class BlockMaze extends ApplicationAdapter {
 //        config.backgroundFPS = 0; // Setting to 0 disables background fps throttling
 //        config.useGL30 = true;
 
+        Gdx.graphics.setWindowedMode(960,540);
+
         Gdx.app.log("KRU", "renderer: " + Gdx.gl.glGetString(GL30.GL_RENDERER));
         Gdx.app.log("KRU", "vendor: " + Gdx.gl.glGetString(GL30.GL_VENDOR));
         Gdx.app.log("KRU", "version: " + Gdx.gl.glGetString(GL30.GL_VERSION));
@@ -75,7 +78,8 @@ public class BlockMaze extends ApplicationAdapter {
 		modelBatch = new ModelBatch();
 
         mat = new Material();//TextureAttribute.createDiffuse(tex));
-        mat.set(IntAttribute.createCullFace(GL_NONE));
+        //mat.set(IntAttribute.createCullFace(GL_NONE));
+        //mat.set(new BlendingAttribute(GL30.GL_SRC_ALPHA, GL30.GL_ONE_MINUS_SRC_ALPHA, 1.1f));
 
 		// A model holds all of the information about an, um, model, such as vertex data and texture info
 		// However, you need an instance to actually render it.  The instance contains all the
@@ -105,8 +109,7 @@ public class BlockMaze extends ApplicationAdapter {
 		Gdx.gl.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 		Gdx.gl.glClearColor(0, 0.7f, 0.7f, 1);
 		Gdx.gl.glClear(GL30.GL_COLOR_BUFFER_BIT | GL30.GL_DEPTH_BUFFER_BIT);
-
-		float delta = Gdx.graphics.getDeltaTime();
+ 		float delta = Gdx.graphics.getDeltaTime();
 		float speed = delta * 100.0f;
 
 		// When you change the camera details, you need to call update();
@@ -122,7 +125,7 @@ public class BlockMaze extends ApplicationAdapter {
 //            blocks[i].transform.rotate(Vector3.Y,((i/9)%3-1)*speed);
 //            modelBatch.render(blocks[i], environment);
 //        }
-        chunks.transform.rotate(Vector3.Y,speed*0.1f);
+//        chunks.transform.rotate(Vector3.Y,speed*0.1f);
         modelBatch.render(chunks,environment);
 		modelBatch.end();
 
@@ -145,16 +148,16 @@ public class BlockMaze extends ApplicationAdapter {
         MeshPartBuilder mp;
 
         modelBuilder.begin();
+
         for(int i=0; i<2560;i++) {
 
             int x = (int)(Math.random() * 64f)*4-128;
             int y = (int)(Math.random() * 64f)*4-128;
             int z = (int)(Math.random() * 64f)*4-128;
 
-            Color color1 = new Color((x+128)/256f,(y+128)/256f,(z+128)/256f,1f);
-            Color color2 = new Color((x+128+8)/256f,(y+128+8)/256f,(z+128+8)/256f,1f);
-            Color color3 = new Color((x+128-8)/256f,(y+128-8)/256f,(z+128-8)/256f,1f);
-
+            Color color1 = new Color((x+128)/256f,(y+128)/256f,(z+128)/256f,.5f);
+            Color color2 = new Color((x+128+8)/256f,(y+128+8)/256f,(z+128+8)/256f,.5f);
+            Color color3 = new Color((x+128-8)/256f,(y+128-8)/256f,(z+128-8)/256f,.5f);
 
             mp = modelBuilder.part("back", GL30.GL_TRIANGLES, Usage.Position | Usage.Normal | Usage.ColorUnpacked | Usage.TextureCoordinates, mat);
             mp.setColor(color1);
